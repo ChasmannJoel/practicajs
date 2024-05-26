@@ -12,6 +12,15 @@ nav {
 .container {
     padding: 2em;
 }
+
+h2{
+    margin: 3rem;
+}
+
+a {
+    text-decoration: none;
+    color: #fff;
+}
 form {
     margin-bottom: 2em;
 }
@@ -20,15 +29,16 @@ input[type="text"] {
     margin-right: 0.5em;
 }
 button {
+    margin: 1.5rem;
     padding: 0.5em;
 }
-.output {
+.salidaDatos{
     margin-top: 2em;
     padding: 1em;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
 }
-.attendance-confirmed {
+.color-asistencia {
     color: #2bc409;
 }
 

@@ -1,76 +1,111 @@
+//Carga de datos guardados y manejo del formulario que  se ejecutará después de que el DOM esté completamente cargado.
 document.addEventListener('DOMContentLoaded', function () {
+
+    //selecciona elementos del Dom.
     const dataForm = document.getElementById('dataForm');
-    const output = document.getElementById('output');
-    
-    // Cargar datos guardados de Local Storage
-    const savedData = JSON.parse(localStorage.getItem('students')) || [];
-    savedData.forEach(student => addStudentToDOM(student.name, student.confirmed));
+    const salidaDatos = document.getElementById('salidaDatos');
 
-    dataForm.addEventListener('submit', function(event) {
+    // Cargar datos guardados de Local Storage.
+    const datosGuardados = JSON.parse(localStorage.getItem('estudiantesArray')) || [];
+
+    //Itera sobre cada estudiante en los datos guardados y llama a agregarEstudianteAlDom para agregarlo al DOM.
+    datosGuardados.forEach(function(estudiante) {
+        agregarEstudianteAlDom(estudiante.nombre, estudiante.confirmado);});
+
+    //Funcion que se activa con el submit del form  
+    dataForm.addEventListener('submit', function(event){
+
+        //event.preventDefault previene que la pagina no recargue por defecto
         event.preventDefault();
-
-        const inputData = document.getElementById('inputData').value.trim();
+        
+        //Obtener el valor del input
+        const datosInput = document.getElementById('datosInput').value.trim();
         
         // Verificar si el nombre ya existe
-        if (isNameDuplicate(inputData)) {
+        if (verificarDuplicado(datosInput)) {
             alert('El nombre ya existe. Por favor, ingrese un nombre diferente.');
             return;
         }
+        //Agrega estudiantes al dom y Local storage
+        agregarEstudianteAlDom(datosInput, false);
+        guardarEstudianteEnLocalStorage(datosInput, false);
 
-        addStudentToDOM(inputData, false);
-        saveStudentToLocalStorage(inputData, false);
-
+        //Resetea el form
         dataForm.reset();
     });
 
-    function addStudentToDOM(name, confirmed) {
-        const studentDiv = document.createElement('div');
+    function guardarEstudianteEnLocalStorage(nombre, confirmado) {
+        //Obtener y parsear datos del Local Storage:
+        const estudiantesArray = JSON.parse(localStorage.getItem('estudiantesArray')) || [];
+        //Agregar un nuevo estudiante al array:
+        estudiantesArray.push({ nombre, confirmado });
+        //Guardar el array actualizado en el Local Storage:
+        localStorage.setItem('estudiantesArray', JSON.stringify(estudiantesArray));
+    }
+
+    function verificarDuplicado(nombre) {
+        //Obtener y parsear datos del Local Storage:
+        const estudiantesArray = JSON.parse(localStorage.getItem('estudiantesArray')) || [];
+        //Some devuelve true si encuentra algún estudiante repetido ignorando mayusculas
+        return estudiantesArray.some(estudiante => estudiante.nombre.toLowerCase() === nombre.toLowerCase());
+    }
+
+    function actualizarEstudianteEnLocalStorage(nombre, confirmado) {
+        //Obtener y parsear datos del Local Storage:
+        let estudiantesArray = JSON.parse(localStorage.getItem('estudiantesArray')) || [];
+        //map(...) itera sobre cada estudiante, (=>) comprueba si el nombre del estudiante coincide y se crea un nuevo objeto en caso de que coincida
+        estudiantesArray = estudiantesArray.map(estudiante => estudiante.nombre === nombre ? { nombre, confirmado } : estudiante);
+        //Guardar el array actualizado en el Local Storage:
+        localStorage.setItem('estudiantesArray', JSON.stringify(estudiantesArray));
+    }
+
+    function removeestudianteFromLocalStorage(nombre) {
+        //Obtener y parsear datos del Local Storage:
+        let estudiantesArray = JSON.parse(localStorage.getItem('estudiantesArray')) || [];
+        //Filtrar el array dejar estudiantes con el nombre diferente al del estudiante con el nombre dado:
+        estudiantesArray = estudiantesArray.filter(estudiante => estudiante.nombre !== nombre);
+        //Guardar el array actualizado en el Local Storage:
+        localStorage.setItem('estudiantesArray', JSON.stringify(estudiantesArray));
+    }
+
+    function agregarEstudianteAlDom(nombre, confirmado) {
+        // Crear un nuevo div para el estudiante
+        const estudianteDiv = document.createElement('div');
+        //Crea el elemento p y le inserta el prop nombre 
         const p = document.createElement('p');
-        p.textContent = name;
-        if (confirmed) {
-            p.classList.add('attendance-confirmed');
+        p.textContent = nombre;
+        // Si el estudiante está confirmado, añadir la clase 'color-asistencia' al p
+        if (confirmado) {
+            p.classList.add('color-asistencia');
         }
 
-        const confirmButton = document.createElement('button');
-        confirmButton.textContent = 'Confirmar Asistencia';
-        confirmButton.addEventListener('click', function() {
-            p.classList.add('attendance-confirmed');
-            updateStudentInLocalStorage(name, true);
+        // Crear boton de confirmar y le inserta el texto de confirmar asistencia
+        const BotonConfirmar = document.createElement('button');
+        BotonConfirmar.textContent = 'Confirmar Asistencia';
+        //Se le agrega un listener de click para que agrege el color y el boleano de asistencia 
+        BotonConfirmar.addEventListener('click', function() {
+            p.classList.add('color-asistencia');
+            actualizarEstudianteEnLocalStorage(nombre, true);
         });
 
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Eliminar';
-        deleteButton.addEventListener('click', function() {
-            studentDiv.remove();
-            removeStudentFromLocalStorage(name);
+        // Crear boton de borrar y le inserta el texto de eliminar
+        const BotonBorrar = document.createElement('button');
+        BotonBorrar.textContent = 'Eliminar';
+        //Se le agrega un listener de click para que elimine el div del dom y su nombre del array 
+        BotonBorrar.addEventListener('click', function() {
+            estudianteDiv.remove();
+            removeestudianteFromLocalStorage(nombre);
         });
 
-        studentDiv.appendChild(p);
-        studentDiv.appendChild(confirmButton);
-        studentDiv.appendChild(deleteButton);
-        output.appendChild(studentDiv);
-    }
+        //Appendchild() se usa para colocar un elemento dentro de otro elemento
+        //Agrega el elemento p (nombre) como hijo del elemento estudianteDiv
+        estudianteDiv.appendChild(p);
+        //Agrega el BotonConfirmar como hijo del elemento estudianteDiv.
+        estudianteDiv.appendChild(BotonConfirmar);
+        //Agrega el BotonConfirmar como hijo del elemento estudianteDiv.
+        estudianteDiv.appendChild(BotonBorrar);
+        //Agrega el elemento estudianteDiv (con nombre y botones) al elemento del DOM con el id salidaDatos.
+        salidaDatos.appendChild(estudianteDiv);
+    }   
 
-    function saveStudentToLocalStorage(name, confirmed) {
-        const students = JSON.parse(localStorage.getItem('students')) || [];
-        students.push({ name, confirmed });
-        localStorage.setItem('students', JSON.stringify(students));
-    }
-
-    function updateStudentInLocalStorage(name, confirmed) {
-        let students = JSON.parse(localStorage.getItem('students')) || [];
-        students = students.map(student => student.name === name ? { name, confirmed } : student);
-        localStorage.setItem('students', JSON.stringify(students));
-    }
-
-    function removeStudentFromLocalStorage(name) {
-        let students = JSON.parse(localStorage.getItem('students')) || [];
-        students = students.filter(student => student.name !== name);
-        localStorage.setItem('students', JSON.stringify(students));
-    }
-
-    function isNameDuplicate(name) {
-        const students = JSON.parse(localStorage.getItem('students')) || [];
-        return students.some(student => student.name.toLowerCase() === name.toLowerCase());
-    }
 });
